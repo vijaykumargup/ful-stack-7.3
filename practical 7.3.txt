@@ -1,0 +1,102 @@
+import React, { useState, useEffect } from "react";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3001"); // Backend URL
+
+export default function App() {
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (message && username) {
+      const msgData = { username, message };
+      socket.emit("send_message", msgData);
+      setMessage("");
+    } else {
+      alert("Enter your name and a message!");
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2>💬 Real-Time Chat App</h2>
+
+      <input
+        style={styles.input}
+        type="text"
+        placeholder="Enter your name"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+
+      <div style={styles.chatBox}>
+        {messages.map((msg, index) => (
+          <p key={index}>
+            <strong>{msg.username}: </strong> {msg.message}
+          </p>
+        ))}
+      </div>
+
+      <div style={styles.inputArea}>
+        <input
+          style={styles.input}
+          type="text"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <button style={styles.button} onClick={sendMessage}>
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    fontFamily: "Arial, sans-serif",
+    width: "400px",
+    margin: "40px auto",
+    textAlign: "center",
+  },
+  chatBox: {
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    height: "300px",
+    overflowY: "auto",
+    margin: "10px 0",
+    padding: "10px",
+  },
+  input: {
+    padding: "10px",
+    margin: "5px",
+    width: "70%",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+  },
+  inputArea: {
+    display: "flex",
+    justifyContent: "center",
+  },
+  button: {
+    padding: "10px 20px",
+    marginLeft: "5px",
+    border: "none",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+};
